@@ -1,0 +1,14 @@
+
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="LogToConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- asynchronous loggers -->
+        <AsyncLogger name="com.example" level="debug" additivity="false">
+            <AppenderRef ref="LogToConsole"/>
+        </AsyncLogger>
+    </Loggers>
+</Configuration>

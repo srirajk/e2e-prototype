@@ -1,0 +1,62 @@
+[
+  {
+    "name": "John Doe",
+    "nationality": "Russian",
+    "risk_score": 85,
+    "reason": "Suspected involvement in cyber espionage"
+  },
+  {
+    "name": "Kim Jong-un",
+    "nationality": "North Korean",
+    "risk_score": 95,
+    "reason": "Leader of a regime with links to nuclear proliferation"
+  },
+  {
+    "name": "Maria Sanchez",
+    "nationality": "Iranian",
+    "risk_score": 75,
+    "reason": "Alleged involvement in sanctions evasion schemes"
+  },
+  {
+    "name": "Ahmed Hassan",
+    "nationality": "Syrian",
+    "risk_score": 80,
+    "reason": "Connections to entities involved in arms trafficking"
+  },
+  {
+    "name": "Juan Garcia",
+    "nationality": "Cuban",
+    "risk_score": 70,
+    "reason": "Suspected of financing activities in embargoed countries"
+  },
+  {
+    "name": "Nicolás Maduro",
+    "nationality": "Venezuelan",
+    "risk_score": 90,
+    "reason": "Alleged involvement in corruption and human rights abuses"
+  },
+  {
+    "name": "Dmitri Ivanov",
+    "nationality": "Belarusian",
+    "risk_score": 60,
+    "reason": "Linked to individuals under EU sanctions"
+  },
+  {
+    "name": "Mohamed Ali",
+    "nationality": "Libyan",
+    "risk_score": 85,
+    "reason": "Ties to groups engaged in terrorist financing"
+  },
+  {
+    "name": "Fatima Ahmed",
+    "nationality": "Sudanese",
+    "risk_score": 75,
+    "reason": "Implicated in human rights violations"
+  },
+  {
+    "name": "Than Htike",
+    "nationality": "Burmese",
+    "risk_score": 70,
+    "reason": "Linked to military officials in Myanmar"
+  }
+]

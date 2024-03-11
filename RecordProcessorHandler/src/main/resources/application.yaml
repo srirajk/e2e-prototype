@@ -1,0 +1,38 @@
+
+server:
+  port: 9000
+spring:
+  main:
+    web-application-type: none
+  application:
+    name: RecordProcessorHandler
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: rph-2
+      auto-offset-reset: earliest
+      max-poll-records: 100
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: true
+
+  temporal:
+    connection:
+      target: 127.0.0.1:7233
+      target.namespace: default
+    workers:
+      - task-queue: DemoTaskQueue
+#        capacity:
+#          max-concurrent-workflow-task-pollers: 6
+#          max-concurrent-activity-task-pollers: 6
+#        rate-limits:
+#          max-worker-activities-per-second: 0
+#          max-task-queue-activities-per-second: 0
+#    workflow-cache:
+#      max-instances: 10
+#      max-threads:
+    workersAutoDiscovery:
+      packages: com.example.rph
+  threads:
+    virtual:
+      enabled: true
