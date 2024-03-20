@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: file-watcher
+  main:
+    web-application-type: none
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+kafka:
+  topic: file-watcher-events
+
+file:
+  watcher:
+    directory: "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/demo-test-folders"
+    file-pattern: ".txt"
+    poll-interval: 2
+    quiet-period: 1

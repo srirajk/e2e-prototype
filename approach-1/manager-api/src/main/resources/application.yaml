@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: manager-api
+  datasource:
+    url: jdbc:h2:file:./../../h2/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    username: sa
+    password: sa
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  kafka:
+    consumer:
+      enable-auto-commit: true
+      bootstrap-servers: localhost:9092
+      group-id: manager-api
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+
+server:
+  port: 9999
+
+kafka:
+  file-events-topic: file-watcher-events
+  bootstrap-servers: localhost:9092
+  file-record-events-topic: file-record-events
+
+
+
+spark:
+  sparkSubmitPath: /path/to/spark-submit
+  jarPath: /path/to/jar
+  mainClass: com.example.MainClass
+  master: local[*]
+  configFileStagingLocation: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging_location_spark_configs
