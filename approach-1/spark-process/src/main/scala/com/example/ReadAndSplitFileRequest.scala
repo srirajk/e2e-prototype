@@ -1,45 +1,26 @@
-import com.fasterxml.jackson.databind.JsonNode
+package com.example
+
+
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.commons.lang3.time.StopWatch
+import org.apache.logging.log4j.LogManager
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.example.{Converter, KafkaProducerUtility}
-import org.example.common.model.{FileRequestEvent, SparkFileSplitRequest}
-import org.apache.logging.log4j.LogManager
-import org.example.common.validate.Validator
+import org.example.common.model.{FileRequestLineEvent, SparkFileSplitRequest}
 import org.example.common.utility.Utility
+import org.example.common.validate.Validator
+import org.example.{Converter, KafkaProducerUtility}
 
-import java.util
 import java.util.concurrent.TimeUnit
 
-/**
- *
- * The SplitBatch class is responsible for splitting a batch of data.
- * It reads a configuration file to get the details of the batch to be processed.
- * The batch is read from a file and split into individual records.
- * Each record is then validated and sent to a Kafka topic.
- * The class also keeps track of the number of records processed and logs the details.
- *
- */
+object ReadAndSplitFileRequest {
 
-object SplitBatch {
+  private val logger = LogManager.getLogger(ReadAndSplitFileRequest.getClass);
 
-  private val logger = LogManager.getLogger(SplitBatch.getClass);
 
-  /**
-   * The main method is the entry point of the SplitBatch class.
-   * It takes command line arguments for the application name, master URL and configuration file location.
-   * It reads the configuration file to get the details of the batch to be processed.
-   * The batch is read from a file and split into individual records.
-   * Each record is then validated and sent to a Kafka topic.
-   * The method also keeps track of the number of records processed and logs the details.
-   *
-   * @param args Command line arguments. The first argument is the application name, the second is the master URL and the third is the configuration file location.
-   * @throws IllegalArgumentException If the number of command line arguments is less than 2.
-   */
   def main(args: Array[String]): Unit = {
-
+    println(args)
     if (args.length < 2) {
       throw new IllegalArgumentException("App Name is missing. Please provide the App Name (e.g., SplitBatch), " +
         "Master argument is missing. Please provide the master URL (e.g., local[*]), " +
@@ -93,16 +74,14 @@ object SplitBatch {
       logger.info("Total Records Match from the file to the expected Record Count")
     }
 
-    val validator: Validator = new Validator();
-
     // POJO .. data object can be hashmap.. but validation needs to be provided.
-    val fileRequestEvents: RDD[FileRequestEvent] = fileRdd
+    val fileRequestLineEvents: RDD[FileRequestLineEvent] = fileRdd
       .zipWithIndex()
       .filter { case (_, index) => index != 0 && index < totalRecordsExpected + 1 } // Exclude header and footer
       .map { case (record, index) => (record.split("\\|"), index) }
       // .filter { case (record, _) => record.length == fieldLength } // move to field level
-      .map { case (record, index) =>
-        validator.validateRecord(fileSplitRequest, index, record)
+      .map { case (recordArray, index) =>
+        Validator.validateFileRequestRecord(fileSplitRequest, index, recordArray)
       }
 
     val recordCounter = spark.sparkContext.longAccumulator("Record Counter")
@@ -110,26 +89,22 @@ object SplitBatch {
     val kafkaBootstrapServers = fileSplitRequest.getKafkaProducerProperties.get("bootstrap-servers").toString;
     val topic = fileSplitRequest.getKafkaProducerProperties.get("topic").toString;
 
-    fileRequestEvents.foreachPartition { partitionIterator =>
+    fileRequestLineEvents.foreachPartition { partitionIterator =>
       val kafkaProducerUtility = new KafkaProducerUtility(kafkaBootstrapServers, topic) // Initialize it here
-      partitionIterator.foreach { case (fileRequestEvent: FileRequestEvent) =>
-        val headerJavaMap: util.Map[String, Array[Byte]] = new util.HashMap[String, Array[Byte]]()
-        /*
-        headerJavaMap.put("requestId", requestId.getBytes)
-        headerJavaMap.put("recordNumber", java.nio.ByteBuffer.allocate(java.lang.Long.BYTES).putLong(index).array())
-        headerJavaMap.put("fileName", fileName.getBytes)
-        headerJavaMap.put("fieldLength", java.nio.ByteBuffer.allocate(java.lang.Long.BYTES).putLong(fieldLength).array())
-        headerJavaMap.put("recordCount", java.nio.ByteBuffer.allocate(java.lang.Integer.BYTES).putInt(totalRecordsExpected).array())*/
-        val json = Utility.getObjectMapper.convertValue(fileRequestEvent, classOf[ObjectNode])
-        kafkaProducerUtility.produceRecord(fileRequestEvent.getRequestId, json, headerJavaMap)
+      partitionIterator.foreach { case fileRequestLineEvent: FileRequestLineEvent => {
+        val headerJavaMap: _root_.java.util.Map[_root_.java.lang.String, _root_.scala.Array[Byte]] = KafkaHeaderBuilderUtility.extractAndBuildHeaders(totalRecordsExpected, fileRequestLineEvent)
+        val json = Utility.getObjectMapper.convertValue(fileRequestLineEvent, classOf[ObjectNode])
+        val key = fileRequestLineEvent.getRequestId + "-" + fileRequestLineEvent.getRecordNumber.toString
+        kafkaProducerUtility.produceRecord(key, json, headerJavaMap)
         recordCounter.add(1) // Increment the accumulator for each record
+      }
       }
       kafkaProducerUtility.shutdown()
     }
 
     logger.info(s"***** Printing the records after the conversion")
     logger.info(s"")
-    fileRequestEvents.take(5).foreach(println)
+    fileRequestLineEvents.take(5).foreach(println)
     logger.info(s"*****")
     logger.info(s"*****")
     spark.close()
@@ -137,5 +112,4 @@ object SplitBatch {
     val totalTime = watch.getTime(TimeUnit.SECONDS)
     logger.info(s"Total time it took ${totalTime} seconds for records processed: ${recordCounter.value}")
   }
-
 }

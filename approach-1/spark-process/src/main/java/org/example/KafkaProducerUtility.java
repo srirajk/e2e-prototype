@@ -20,13 +20,13 @@ public class KafkaProducerUtility {
         var props = new Properties();
         props.put("bootstrap.servers", bootstrapServers);
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("value.serializer", "com.example.KafkaJsonSerializer");
+        props.put("value.serializer", "org.example.serializer.KafkaJsonSerializer");
         this.kafkaProducer = new KafkaProducer<>(props);
     }
 
-    public void produceRecord(final String key, final JsonNode data, Map<String, byte[]> headers) {
-        logger.debug("producing the key {} and data {}", key, data);
-        var record = new ProducerRecord(topic, null, key, data, buildHeaders(headers));
+    public void produceRecord(final String key, final JsonNode value, Map<String, byte[]> headers) {
+        logger.debug("producing the key {} and data {}", key, value);
+        var record = new ProducerRecord(topic, null, key, value, buildHeaders(headers));
         this.kafkaProducer.send(record);
     }
 

@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 public class FileEventListener {
 
 
-    @Value("${kafka.file-event-topic}")
-    private String fileWatcherEventTopicName;
+    @Value("${kafka.file-events-topic}")
+    private String fileWatcherEventsTopicName;
 
     private final FileEventDispatcherService fileEventDispatcherService;
 
@@ -23,7 +23,7 @@ public class FileEventListener {
     }
 
     @KafkaListener(
-            topics = "#{__listener.fileWatcherEventTopicName}",
+            topics = "#{__listener.fileWatcherEventsTopicName}",
             containerFactory = "fileEventKafkaListenerContainerFactory")
     public void listen(ConsumerRecord<String, FileEvent> fileEventRecord) {
         final FileEvent fileEvent = fileEventRecord.value();
@@ -31,8 +31,8 @@ public class FileEventListener {
         fileEventDispatcherService.dispatchFileEvent(fileEvent);
     }
 
-    public String getFileWatcherEventTopicName() {
-        return fileWatcherEventTopicName;
+    public String getFileWatcherEventsTopicName() {
+        return fileWatcherEventsTopicName;
     }
 
 }

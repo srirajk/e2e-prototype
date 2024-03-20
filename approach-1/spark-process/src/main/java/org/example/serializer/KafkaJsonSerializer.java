@@ -1,4 +1,4 @@
-package org.example;
+package org.example.serializer;
 
 import org.apache.kafka.common.serialization.Serializer;
 import org.example.common.utility.Utility;

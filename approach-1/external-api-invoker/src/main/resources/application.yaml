@@ -1,0 +1,31 @@
+spring:
+  main:
+    web-application-type: none
+  application:
+    name: external-api-invoker
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+    consumer:
+      enable-auto-commit: true
+      bootstrap-servers: localhost:9092
+      group-id: external-api-invoker
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+
+kafka:
+  file-record-line-events-topic: file-record-events
