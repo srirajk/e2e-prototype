@@ -20,7 +20,6 @@ object ReadAndSplitFileRequest {
 
 
   def main(args: Array[String]): Unit = {
-    println(args)
     if (args.length < 2) {
       throw new IllegalArgumentException("App Name is missing. Please provide the App Name (e.g., SplitBatch), " +
         "Master argument is missing. Please provide the master URL (e.g., local[*]), " +
@@ -35,7 +34,7 @@ object ReadAndSplitFileRequest {
     val configFileLocation = args(2)
 
     val converter = new Converter();
-    val fileSplitRequest: SparkFileSplitRequest = converter.getConfig(configFileLocation);
+    val fileSplitRequest: SparkFileSplitRequest = converter.getSparkFileSplitRequestConfig(configFileLocation);
 
     val spark = SparkSession.builder()
       .appName(appName)

@@ -1,0 +1,10 @@
+{
+  "kafka": {
+    "brokers": "localhost:9092",
+    "topic": "file-record-events",
+    "groupId": "spark-streaming-aggregator-1"
+  },
+  "deltalake": {
+    "location": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/deltalake_storage"
+  }
+}

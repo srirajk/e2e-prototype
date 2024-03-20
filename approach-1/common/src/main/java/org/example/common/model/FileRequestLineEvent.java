@@ -26,7 +26,8 @@ public class FileRequestLineEvent implements Cloneable, Serializable {
     private String fileName;
     private boolean isValid;
     private String errorMessage;
-    private List<ObjectNode> hits;
+    private List<MatchModel> hits;
+    private boolean postFilterApplied;
 
     @Override
     public FileRequestLineEvent clone() {
