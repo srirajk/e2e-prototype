@@ -2,6 +2,7 @@ package org.example;
 
 import org.example.common.model.FileRequestLineEvent;
 import org.example.common.model.SparkFileSplitRequest;
+import org.example.common.model.SparkMergeDataRequest;
 import org.example.common.utility.Utility;
 
 import java.io.File;
@@ -16,6 +17,15 @@ public class Converter {
             throw new RuntimeException(e);
         }
     }
+
+    public static SparkMergeDataRequest getSparkMergeDataRequestConfig(final String configFileLocation) {
+        try {
+            return  Utility.getObjectMapper().readValue(new File(configFileLocation), SparkMergeDataRequest.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public static FileRequestLineEvent getFileRequestLineEvent(final byte[] fileRequestLineEventInBytes) {
         try {

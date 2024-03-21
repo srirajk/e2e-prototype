@@ -1,22 +1,22 @@
-package org.example.common.model;
+package org.example.managerapi.model;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BusinessProduct implements Serializable {
+public class FileEventStatus {
 
     private String businessId;
     private String productId;
-    private Integer splitSize;
-    private Integer fieldLength;
-    private Integer configurationSplitSize;
+    private String filePath;
+    private String requestId;
+    private String status;
+    private String currentStep;
 
 }

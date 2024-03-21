@@ -37,3 +37,4 @@ build/
 ### Mac OS ###
 .DS_Store
 /staging_location_spark_configs/
+/staging-area/

@@ -7,7 +7,7 @@
     </Appenders>
     <Loggers>
         <!-- asynchronous loggers -->
-        <AsyncLogger name="com.example" level="debug" additivity="false">
+        <AsyncLogger name="com.example" level="warn" additivity="false">
             <AppenderRef ref="LogToConsole"/>
         </AsyncLogger>
     </Loggers>

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS business_product (
                                   product_id VARCHAR(255),
                                   split_size INT,
                                   field_length INT,
+                                  configuration_split_size INT,
                                   PRIMARY KEY (id),
                                   UNIQUE (business_id, product_id)
 );

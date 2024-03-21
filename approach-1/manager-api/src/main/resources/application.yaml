@@ -2,7 +2,7 @@ spring:
   application:
     name: manager-api
   datasource:
-    url: jdbc:h2:file:./../../h2/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    url: jdbc:h2:file:./staging-area/h2/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
     username: sa
     password: sa
     driver-class-name: org.h2.Driver
@@ -24,6 +24,8 @@ spring:
       bootstrap-servers: localhost:9092
       group-id: manager-api
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      #TODO fix this later
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       #value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
       properties:
@@ -31,7 +33,7 @@ spring:
           json:
             trusted:
               packages: '*'
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 
 server:
   port: 9999
@@ -42,11 +44,31 @@ kafka:
   file-record-events-topic: file-record-events
   file-request-status-updates-topic: file-request-status-updates
 
+file-records-delta-table-location: "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/deltalake_storage/file_records"
+base-staging-area: "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area"
+spark-properties:
+  file-splitter:
+    sparkSubmitPath: /Users/srirajkadimisetty/tools/spark-3.5.1-bin-hadoop3-scala2.13/bin/spark-submit
+    jarPath: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/target/spark-process-0.0.1-SNAPSHOT.jar
+    mainClass: com.example.ReadAndSplitFileRequest
+    master: local[2]
+    logFileAppBaseLocation: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/logs/
+    appType: ReadAndSplitFileRequest
+    configFileStagingLocation: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/fileSplitJob
+  output-file-writer:
+    sparkSubmitPath: /Users/srirajkadimisetty/tools/spark-3.5.1-bin-hadoop3-scala2.13/bin/spark-submit
+    jarPath: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/target/spark-process-0.0.1-SNAPSHOT.jar
+    mainClass: com.example.SparkOutputFileWriter
+    master: local[2]
+    logFileAppBaseLocation: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/logs/
+    appType: SparkOutputFileWriter
+    configFileStagingLocation: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/sparkOutputFileWriter
 
-
-spark:
-  sparkSubmitPath: /path/to/spark-submit
-  jarPath: /path/to/jar
-  mainClass: com.example.MainClass
-  master: local[*]
-  configFileStagingLocation: /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging_location_spark_configs
+springdoc:
+  api-docs:
+    enabled: true
+    #Default : http://localhost:9999/api-docs
+    path: /swagger-docs
+  swagger-ui:
+    #Default : http://localhost:9999/swagger-ui/index.html
+    path: "/swagger-ui.html"

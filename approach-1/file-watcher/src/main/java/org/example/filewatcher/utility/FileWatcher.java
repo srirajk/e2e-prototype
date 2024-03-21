@@ -2,6 +2,7 @@ package org.example.filewatcher.utility;
 
 import lombok.extern.log4j.Log4j2;
 import org.example.common.model.FileEvent;
+import org.example.common.utility.Utility;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -66,6 +67,7 @@ public class FileWatcher {
                        final String fileExtension,
                        final KafkaProducer kafkaProducer) {
         this.dir = Paths.get(dir);
+        Utility.createDirectoryIfNotExists(this.dir.toAbsolutePath().toString());
         this.quietPeriodMillis = quietPeriodMillis;
         this.pollIntervalMillis = pollIntervalMillis;
         this.fileExtension = fileExtension;

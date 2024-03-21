@@ -9,10 +9,13 @@ import org.example.common.model.BusinessProductFileRequest;
 import org.example.common.model.FileEvent;
 import org.example.common.model.SparkFileSplitRequest;
 import org.example.common.utility.SparkDeploymentUtility;
+import org.example.common.utility.Utility;
 import org.example.managerapi.model.BusinessProductEntity;
 import org.example.managerapi.model.FileEventStatusEntity;
 import org.example.managerapi.repository.BusinessProductRepository;
 import org.example.managerapi.repository.FileEventStatusRepository;
+import org.example.managerapi.utility.EntityConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,12 +25,14 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.example.managerapi.utility.EntityConverter.convertToBusinessProduct;
+
 @Service
 @Log4j2
 public class FileEventDispatcherService {
 
-    private BusinessProductRepository businessProductRepository;
-    private FileEventStatusRepository fileEventStatusRepository;
+    private final BusinessProductRepository businessProductRepository;
+    private final FileEventStatusRepository fileEventStatusRepository;
     private final ObjectMapper mapper;
     private final SparkDeploymentUtility sparkDeploymentUtility;
 
@@ -40,11 +45,11 @@ public class FileEventDispatcherService {
     public FileEventDispatcherService(final BusinessProductRepository businessProductRepository,
                                       final FileEventStatusRepository fileEventStatusRepository,
                                       final ObjectMapper mapper,
-                                      final SparkDeploymentUtility sparkDeploymentUtility) {
+                                     @Qualifier("fileSplitJobDeploymentUtility") final SparkDeploymentUtility fileSplitJobDeploymentUtility) {
         this.businessProductRepository = businessProductRepository;
         this.fileEventStatusRepository = fileEventStatusRepository;
         this.mapper = mapper;
-        this.sparkDeploymentUtility = sparkDeploymentUtility;
+        this.sparkDeploymentUtility = fileSplitJobDeploymentUtility;
     }
 
     public void dispatchFileEvent(final FileEvent fileEvent) {
@@ -71,38 +76,23 @@ public class FileEventDispatcherService {
         final String requestId = fileEventStatusEntity.getRequestId();
         final BusinessProductEntity businessProductEntity = businessProductRepository.findByBusinessIdAndProductId(fileEventStatusEntity.getBusinessId(),
                 fileEventStatusEntity.getProductId());
-        final BusinessProductFileRequest businessProductFileRequest = convertToBusinessProductFileRequest(fileEventStatusEntity);
-        final BusinessProduct businessProduct = convertToBusinessProduct(businessProductEntity);
+        final BusinessProductFileRequest businessProductFileRequest = EntityConverter.convertToBusinessProductFileRequest(fileEventStatusEntity);
+        final BusinessProduct businessProduct = EntityConverter.convertToBusinessProduct(businessProductEntity);
         final SparkFileSplitRequest sparkFileSplitRequest = SparkFileSplitRequest.builder()
                 .businessProductFileRequest(businessProductFileRequest)
                 .businessProduct(businessProduct)
                 .kafkaProducerProperties(Map.of("bootstrap-servers", kafkaBootstrapServers,
                         "topic", fileRecordEventsTopic))
+                .exclusionMarker(1)
                 .build();
         final ObjectNode config = mapper.convertValue(sparkFileSplitRequest, ObjectNode.class);
         sparkDeploymentUtility.deploySparkJob("FileSplitProcessor-" + requestId,
-                1,
+                2,
                 1,
                 1,
                 config, Collections.emptyList());
     }
 
-    private BusinessProductFileRequest convertToBusinessProductFileRequest(final FileEventStatusEntity fileEventStatusEntity) {
-        return BusinessProductFileRequest.builder()
-                .businessId(fileEventStatusEntity.getBusinessId())
-                .productId(fileEventStatusEntity.getProductId())
-                .filePath(fileEventStatusEntity.getFilePath())
-                .requestId(fileEventStatusEntity.getRequestId())
-                .build();
-    }
 
-    private BusinessProduct convertToBusinessProduct(final BusinessProductEntity businessProductEntity) {
-        return BusinessProduct.builder()
-                .businessId(businessProductEntity.getBusinessId())
-                .productId(businessProductEntity.getProductId())
-                .splitSize(businessProductEntity.getSplitSize())
-                .fieldLength(businessProductEntity.getFieldLength())
-                .build();
-    }
 
 }

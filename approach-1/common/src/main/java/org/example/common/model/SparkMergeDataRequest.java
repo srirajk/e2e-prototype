@@ -12,11 +12,13 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SparkFileSplitRequest implements Serializable {
+public class SparkMergeDataRequest implements Serializable {
 
     private BusinessProduct businessProduct;
     private BusinessProductFileRequest businessProductFileRequest;
     private Map<String, Object> kafkaProducerProperties;
-    private int exclusionMarker;
+    private String deltaTableLocation;
+    private String outputDataLocation;
+    private Long totalRecords;
 
 }

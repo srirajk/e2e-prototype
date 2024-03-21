@@ -1,6 +1,21 @@
 package org.example.managerapi.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@ConfigurationProperties(prefix = "spark")
-public record SparkConfigurationProperties(String sparkSubmitPath, String jarPath, String mainClass, String master, String configFileStagingLocation) {}
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class SparkConfigurationProperties {
+    private String sparkSubmitPath;
+    private String jarPath;
+    private String mainClass;
+    private String master;
+    private String configFileStagingLocation;
+    private String logFileAppBaseLocation;
+    private String appType;
+}
+

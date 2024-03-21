@@ -20,8 +20,8 @@ object SparkStreamingAggregator {
         "ApplicationConfigFileLocation (e.g., /Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/src/main/resources/kafka-streaming-aggregator-config.json), ")
     }
 
-/*    val appName = args(0);
-    val master = args(1)*/
+    /*    val appName = args(0);
+        val master = args(1)*/
     val applicationConfigFileLocation = args(0)
 
     val converter = new Converter();
@@ -34,8 +34,8 @@ object SparkStreamingAggregator {
 
     val appName = config.getAppDetails.getAppName;
     val master = config.getAppDetails.getMaster;
-    val checkpointLocation = config.getAppDetails.getCheckpointLocation+Converter.removeExtraSpacesAndSpecialCharacters(appName)
-    val deltalakeTable = config.getDeltalake.getStorageLocation+config.getDeltalake.getTableName
+    val checkpointLocation = config.getAppDetails.getCheckpointLocation + Converter.removeExtraSpacesAndSpecialCharacters(appName)
+    val deltalakeTable = config.getDeltalake.getStorageLocation + config.getDeltalake.getTableName
 
 
     val spark = SparkSession.builder()
@@ -52,6 +52,7 @@ object SparkStreamingAggregator {
       .option("subscribe", config.getKafka.getInputTopic)
       .option("startingOffsets", "earliest")
       .option("group.id", config.getKafka.getGroupId)
+      .option("kafkaConsumer.pollTimeoutMs", "2000")
       .load()
 
 
@@ -99,7 +100,7 @@ object SparkStreamingAggregator {
       .foreachBatch(
         {
           (batchDf: DataFrame, batchId: Long) => {
-
+            logger.warn(s"Started writing the batch of records for batchId :: $batchId")
             batchDf.write
               .format("delta")
               .mode("append")
@@ -115,7 +116,7 @@ object SparkStreamingAggregator {
                     val businessId = record.getAs[String]("businessId")
                     val productId = record.getAs[String]("productId")
                     val requestId = record.getAs[String]("requestId")
-                   // val recordNumber = record.getAs[Long]("recordNumber")
+                    // val recordNumber = record.getAs[Long]("recordNumber")
                     val totalRecords = record.getAs[Long]("totalRecords")
                     //logger.info(s"Pre Processing BusinessId: $businessId, ProductId: $productId, RequestId: $requestId, RecordNumber: $recordNumber")
                     val json = Utility.getObjectMapper.createObjectNode()
@@ -128,6 +129,8 @@ object SparkStreamingAggregator {
                 )
                 kafkaProducerUtility.shutdown();
               })
+
+            logger.warn(s"Finished writing the batch of records for batchId :: $batchId")
           }
         }
       )
@@ -166,69 +169,68 @@ object SparkStreamingAggregator {
         }*/
 
 
+    /*  df.writeStream
+        .outputMode("append")
+        .foreachBatch(
+          {
+            (batchDf: DataFrame, batchId: Long) => {
 
-  /*  df.writeStream
-      .outputMode("append")
-      .foreachBatch(
-        {
-          (batchDf: DataFrame, batchId: Long) => {
+              // can i get the full dataframe for the distinct requestIds within this batch ?
 
-            // can i get the full dataframe for the distinct requestIds within this batch ?
+              batchDf.write
+                .format("delta")
+                .mode("append")
+                .option("path", "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/output_data")
+                .partitionBy("businessId", "productId", "requestId")
+                .save()
 
-            batchDf.write
-              .format("delta")
-              .mode("append")
-              .option("path", "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/output_data")
-              .partitionBy("businessId", "productId", "requestId")
-              .save()
+              batchDf.dropDuplicates("requestId").foreachPartition(
+                (partition: Iterator[Row]) => {
+                  val kafkaProducerUtility = new KafkaProducerUtility(config.getKafka.getBrokers, config.getKafka.getNotificationTopic) // Initialize it here
+                  partition.foreach(
+                    record => {
+                      val businessId = record.getAs[String]("businessId")
+                      val productId = record.getAs[String]("productId")
+                      val requestId = record.getAs[String]("requestId")
+                      val recordNumber = record.getAs[Long]("recordNumber")
+                      logger.info(s"Pre Processing BusinessId: $businessId, ProductId: $productId, RequestId: $requestId, RecordNumber: $recordNumber")
 
-            batchDf.dropDuplicates("requestId").foreachPartition(
-              (partition: Iterator[Row]) => {
-                val kafkaProducerUtility = new KafkaProducerUtility(config.getKafka.getBrokers, config.getKafka.getNotificationTopic) // Initialize it here
-                partition.foreach(
-                  record => {
-                    val businessId = record.getAs[String]("businessId")
-                    val productId = record.getAs[String]("productId")
-                    val requestId = record.getAs[String]("requestId")
-                    val recordNumber = record.getAs[Long]("recordNumber")
-                    logger.info(s"Pre Processing BusinessId: $businessId, ProductId: $productId, RequestId: $requestId, RecordNumber: $recordNumber")
+                    }
+                  )
+                })
 
-                  }
-                )
-              })
+            /*  val spark = batchDf.sparkSession
 
-          /*  val spark = batchDf.sparkSession
+              val output_data_table = spark.read
+                .format("delta")
+                .load("/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/output_data")
 
-            val output_data_table = spark.read
-              .format("delta")
-              .load("/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/output_data")
-
-            batchDf.dropDuplicates("requestId").foreachPartition(
-              (partition: Iterator[Row]) => {
-                partition.foreach(
-                  record => {
-                    val businessId = record.getAs[String]("businessId")
-                    val productId = record.getAs[String]("productId")
-                    val requestId = record.getAs[String]("requestId")
-                   /* val recordNumber = record.getAs[Long]("recordNumber")*/
-                    logger.info(s"Pre Processing BusinessId: $businessId, ProductId: $productId, RequestId: $requestId")
-                    val totalRecordsProcessed = output_data_table.filter(
-                      (col(("businessId")) === businessId) &&
-                        (col(("productId")) === productId) &&
-                        (col(("requestId")) === requestId)
-                    ).agg(countDistinct("recordNumber").alias("totalRecordsProcessedSoFar"))
-                    logger.info(s"Total Records $totalRecordsProcessed Executed for BusinessId: $businessId, ProductId: $productId, RequestId: $requestId")
-                  }
-                )
-              })*/
+              batchDf.dropDuplicates("requestId").foreachPartition(
+                (partition: Iterator[Row]) => {
+                  partition.foreach(
+                    record => {
+                      val businessId = record.getAs[String]("businessId")
+                      val productId = record.getAs[String]("productId")
+                      val requestId = record.getAs[String]("requestId")
+                     /* val recordNumber = record.getAs[Long]("recordNumber")*/
+                      logger.info(s"Pre Processing BusinessId: $businessId, ProductId: $productId, RequestId: $requestId")
+                      val totalRecordsProcessed = output_data_table.filter(
+                        (col(("businessId")) === businessId) &&
+                          (col(("productId")) === productId) &&
+                          (col(("requestId")) === requestId)
+                      ).agg(countDistinct("recordNumber").alias("totalRecordsProcessedSoFar"))
+                      logger.info(s"Total Records $totalRecordsProcessed Executed for BusinessId: $businessId, ProductId: $productId, RequestId: $requestId")
+                    }
+                  )
+                })*/
 
 
+            }
           }
-        }
-      )
-      .option("checkpointLocation", "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/checkpointLocation")
-      .start()
-      .awaitTermination()*/
+        )
+        .option("checkpointLocation", "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/checkpointLocation")
+        .start()
+        .awaitTermination()*/
 
 
     /*    df.writeStream

@@ -35,8 +35,12 @@ object ReadAndSplitFileRequest {
 
     val converter = new Converter();
     val fileSplitRequest: SparkFileSplitRequest = converter.getSparkFileSplitRequestConfig(configFileLocation);
+    val exclusionMarker = fileSplitRequest.getExclusionMarker
 
     val fieldLength = fileSplitRequest.getBusinessProduct.getFieldLength
+    val businessId = fileSplitRequest.getBusinessProductFileRequest.getBusinessId
+    val productId = fileSplitRequest.getBusinessProductFileRequest.getProductId
+    val requestId = fileSplitRequest.getBusinessProductFileRequest.getRequestId
 
     val spark = SparkSession.builder()
       .appName(appName)
@@ -48,31 +52,51 @@ object ReadAndSplitFileRequest {
     val firstTwoLines = fileRdd.take(2)
     val headerLine = firstTwoLines(0)
     val secondLine = firstTwoLines(1)
-    logger.info(s"Header Line: $headerLine")
-    logger.info(s"Second Line: $secondLine")
+    logger.warn(s"Header Line: $headerLine")
+    logger.warn(s"Second Line: $secondLine")
     val parallelism = sc.defaultParallelism
 
     // Efficiently calculate total record count without fetching all data
+    // TODO look at various other approaches
     val totalRecordsExpected: Int = fileRdd.mapPartitionsWithIndex { (idx, iter) =>
       if (idx == parallelism - 1) { // Assuming the last partition
         Iterator.single(iter.size - 1) // Exclude the last line (footer)
       } else {
         Iterator.single(iter.size)
       }
-    }.sum.toInt - 2 // Exclude header & footer
+    }.sum.toInt - exclusionMarker // Exclude header & footer
+
 
     // Fetch the last line for total records value (footer)
     val totalRecordsInFooterValue: Int = fileRdd.mapPartitions(iter =>
       Iterator.single(iter.toSeq.last)).collect().last.toInt
 
-    logger.info(s"totalRecordsExpected: $totalRecordsExpected")
-    logger.info(s"totalRecordsInFooterValue: $totalRecordsInFooterValue")
+
+    /*    val totalRecordsInFooterValue: Option[Int] = fileRdd
+          .mapPartitionsWithIndex((idx, iter) => {
+            if (idx == fileRdd.getNumPartitions - 1) { // Check if this is the last partition
+              // Process only the last line of the last partition
+              val lastLine = if (iter.nonEmpty) Some(iter.reduce((_, b) => b)) else None
+              lastLine
+                .map(_.split("\\|"))
+                .filter(parts => parts.length == 1 && parts.head.matches("\\d+")) // Ensure it's a single number
+                .map(parts => Iterator.single(parts.head.toInt)) // Convert to Int and wrap in Iterator
+            } else {
+              Iterator.empty // Not the last partition, return an empty iterator
+            }
+          })
+          .collect()
+          .flatten // Flatten to remove empty options and unwrap non-empty options
+          .lastOption // Get the last element, if present
+    */
+    logger.warn(s"totalRecordsExpected: $totalRecordsExpected")
+    logger.warn(s"totalRecordsInFooterValue: $totalRecordsInFooterValue")
 
     if (totalRecordsExpected != totalRecordsInFooterValue) {
       //throw new Exception("Records count mismatch")
-      logger.error("Total Records Match from the file to the expected Record Count")
+      logger.error("1st Validation :: Total Records DID not Match from the file to the expected Record Count can be ignored")
     } else {
-      logger.info("Total Records Match from the file to the expected Record Count")
+      logger.warn("Total Records Match from the file to the expected Record Count")
     }
 
     // POJO .. data object can be hashmap.. but validation needs to be provided.
@@ -92,7 +116,7 @@ object ReadAndSplitFileRequest {
 
     fileRequestLineEvents.foreachPartition { partitionIterator =>
       val kafkaProducerUtility = new KafkaProducerUtility(kafkaBootstrapServers, topic) // Initialize it here
-      partitionIterator.foreach { case fileRequestLineEvent: FileRequestLineEvent => {
+      partitionIterator.foreach { fileRequestLineEvent: FileRequestLineEvent => {
         val headerJavaMap: _root_.java.util.Map[_root_.java.lang.String, _root_.scala.Array[Byte]] = KafkaHeaderBuilderUtility.extractAndBuildHeaders(totalRecordsExpected, fileRequestLineEvent)
         val json = Utility.getObjectMapper.convertValue(fileRequestLineEvent, classOf[ObjectNode])
         val key = fileRequestLineEvent.getRequestId + "-" + fileRequestLineEvent.getRecordNumber.toString
@@ -103,14 +127,36 @@ object ReadAndSplitFileRequest {
       kafkaProducerUtility.shutdown()
     }
 
-    logger.info(s"***** Printing the records after the conversion")
-    logger.info(s"")
-    fileRequestLineEvents.take(5).foreach(println)
-    logger.info(s"*****")
-    logger.info(s"*****")
+    val accumulatorRecordCounterValue = recordCounter.value
+
+    if (totalRecordsInFooterValue == accumulatorRecordCounterValue) {
+      logger.warn(s"2nd Validation :: MATCHED Total Records ${totalRecordsInFooterValue} Match from the file to the expected Record Count Accumulator ${accumulatorRecordCounterValue} ")
+    } else {
+      logger.error(s"2nd Validation :: NOT MATCHED Total Records ${totalRecordsInFooterValue} DID not Match from the file to the expected Record Count Accumulator ${accumulatorRecordCounterValue} cannot be ignored")
+    }
+
+
+    logger.debug(s"***** Printing the records after the conversion")
+    logger.debug(s"")
+    fileRequestLineEvents.take(5).foreach(record => logger.debug(record.toString))
+    logger.debug(s"*****")
+    logger.debug(s"*****")
+
+
+    val kafkaProducerUtility = new KafkaProducerUtility(kafkaBootstrapServers, "file-request-status-updates") // Initialize it here
+    val json = Utility.getObjectMapper.createObjectNode()
+    json.put("businessId", businessId)
+    json.put("productId", productId)
+    json.put("requestId", requestId)
+    json.put("totalRecords", totalRecordsInFooterValue)
+    json.put("totalRecordsProcessed", 0)
+    json.put("source", "ReadAndSplitFileRequest")
+    kafkaProducerUtility.produceRecord(requestId, json, null)
+    kafkaProducerUtility.shutdown()
+
     spark.close()
     watch.stop()
     val totalTime = watch.getTime(TimeUnit.SECONDS)
-    logger.info(s"Total time it took ${totalTime} seconds for records processed: ${recordCounter.value}")
+    logger.warn(s"Total time it took ${totalTime} seconds for records processed: $accumulatorRecordCounterValue")
   }
 }

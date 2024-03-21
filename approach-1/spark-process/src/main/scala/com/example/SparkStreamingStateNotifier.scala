@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.SparkStreamingAggregator.logger
 import org.apache.logging.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 import org.apache.spark.sql.execution.streaming.sources.ForeachWrite
@@ -34,6 +35,8 @@ object SparkStreamingStateNotifier {
     val checkpointLocation = config.getAppDetails.getCheckpointLocation + Converter.removeExtraSpacesAndSpecialCharacters(appName)
     val deltalakeTable = config.getDeltalake.getStorageLocation + config.getDeltalake.getTableName
 
+    Utility.createDirectoryIfNotExists(deltalakeTable)
+
 
     val spark = SparkSession.builder()
       .appName(appName)
@@ -56,6 +59,7 @@ object SparkStreamingStateNotifier {
       .option("subscribe", config.getKafka.getNotificationTopic)
       .option("startingOffsets", "earliest")
       .option("group.id", groupId)
+      .option("kafkaConsumer.pollTimeoutMs", "5000")
       .load()
 
     var df = kafkaDf.selectExpr("CAST(value AS STRING) as jsonStr")
@@ -64,6 +68,7 @@ object SparkStreamingStateNotifier {
 
     df.writeStream.foreachBatch({
         (batchDf: DataFrame, batchId: Long) => {
+          logger.warn(s"Started writing the batch of records for batchId :: $batchId")
           val sparkSession = batchDf.sparkSession
           import sparkSession.implicits._
           val screening_data = sparkSession.read.format("delta").load(deltalakeTable)
@@ -122,11 +127,13 @@ object SparkStreamingStateNotifier {
                     json.put("requestId", requestId)
                     json.put("totalRecords", totalRecords)
                     json.put("totalRecordsProcessed", totalRecordsProcessed)
+                    json.put("source", "SparkStreamingStateNotifier")
                     kafkaProducerUtility.produceRecord(requestId, json, null)
                   }
                 })
               kafkaProducerUtility.shutdown()
             })
+          logger.warn(s"Finished writing the batch of records for batchId :: $batchId")
         }
       })
       .option("checkpointLocation", checkpointLocation)

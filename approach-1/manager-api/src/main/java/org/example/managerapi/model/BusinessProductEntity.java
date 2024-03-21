@@ -21,5 +21,6 @@ public class BusinessProductEntity {
     private String productId;
     private Integer splitSize;
     private Integer fieldLength;
+    private Integer configurationSplitSize;
 
 }

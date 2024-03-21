@@ -8,28 +8,90 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(SparkConfigurationProperties.class)
+//@EnableConfigurationProperties(SparkConfigurationProperties.class)
 public class SparkDeploymentConfiguration {
 
     private SparkConfigurationProperties sparkConfigurationProperties;
     private final ObjectMapper mapper;
 
-    public SparkDeploymentConfiguration(final SparkConfigurationProperties sparkConfigurationProperties,
-                                        final ObjectMapper mapper) {
-        this.sparkConfigurationProperties = sparkConfigurationProperties;
+    private final FileSplitJobProperties fileSplitJobProperties;
+    private final SparkOutputFileWriterProperties sparkOutputFileWriterProperties;
+    public SparkDeploymentConfiguration(final ObjectMapper mapper,
+                                        final FileSplitJobProperties fileSplitJobProperties,
+                                        final SparkOutputFileWriterProperties sparkOutputFileWriterProperties) {
         this.mapper = mapper;
+        this.fileSplitJobProperties = fileSplitJobProperties;
+        this.sparkOutputFileWriterProperties = sparkOutputFileWriterProperties;
     }
 
-    @Bean
-    public SparkDeploymentUtility sparkDeploymentUtility() {
+    @Bean("fileSplitJobDeploymentUtility")
+    public SparkDeploymentUtility fileSplitSparkDeploymentUtility() {
         return SparkDeploymentUtility.builder()
-                .sparkSubmitPath(sparkConfigurationProperties.sparkSubmitPath())
-                .jarPath(sparkConfigurationProperties.jarPath())
-                .mainClass(sparkConfigurationProperties.mainClass())
-                .master(sparkConfigurationProperties.master())
+                .sparkSubmitPath(fileSplitJobProperties.getSparkSubmitPath())
+                .jarPath(fileSplitJobProperties.getJarPath())
+                .mainClass(fileSplitJobProperties.getMainClass())
+                .master(fileSplitJobProperties.getMaster())
+                .logFileAppBaseLocation(fileSplitJobProperties.getLogFileAppBaseLocation())
+                .sparkJobType(fileSplitJobProperties.getAppType())
                 .mapper(mapper)
-                .configFileLocation(sparkConfigurationProperties.configFileStagingLocation())
+                .configFileAppBaseLocation(fileSplitJobProperties.getConfigFileStagingLocation())
                 .build();
     }
 
+@Bean("sparkOutputFileWriterDeploymentUtility")
+public SparkDeploymentUtility sparkOutputFileWriterDeploymentUtility() {
+    return SparkDeploymentUtility.builder()
+            .sparkSubmitPath(sparkOutputFileWriterProperties.getSparkSubmitPath())
+            .jarPath(sparkOutputFileWriterProperties.getJarPath())
+            .mainClass(sparkOutputFileWriterProperties.getMainClass())
+            .master(sparkOutputFileWriterProperties.getMaster())
+            .logFileAppBaseLocation(sparkOutputFileWriterProperties.getLogFileAppBaseLocation())
+            .sparkJobType(sparkOutputFileWriterProperties.getAppType())
+            .mapper(mapper)
+            .configFileAppBaseLocation(sparkOutputFileWriterProperties.getConfigFileStagingLocation())
+            .build();
 }
+
+}
+
+
+/*
+@Configuration
+public class SparkDeploymentConfiguration {
+
+    private final ObjectMapper mapper;
+    private final FileSplitJobProperties fileSplitJobProperties;
+    private final SparkOutputFileWriterProperties sparkOutputFileWriterProperties;
+
+    public SparkDeploymentConfiguration(final ObjectMapper mapper,
+                                        final FileSplitJobProperties fileSplitJobProperties,
+                                        final SparkOutputFileWriterProperties sparkOutputFileWriterProperties) {
+        this.mapper = mapper;
+        this.fileSplitJobProperties = fileSplitJobProperties;
+        this.sparkOutputFileWriterProperties = sparkOutputFileWriterProperties;
+    }
+
+    @Bean
+    public SparkDeploymentUtility fileSplitJobDeploymentUtility() {
+        return createSparkDeploymentUtility(fileSplitJobProperties);
+    }
+
+    @Bean
+    public SparkDeploymentUtility sparkOutputFileWriterDeploymentUtility() {
+        return createSparkDeploymentUtility(sparkOutputFileWriterProperties);
+    }
+
+    private SparkDeploymentUtility createSparkDeploymentUtility(SparkJobProperties properties) {
+        return new SparkDeploymentUtility(
+                properties.getSparkSubmitPath(),
+                properties.getJarPath(),
+                properties.getMainClass(),
+                properties.getMaster(),
+                mapper,
+                properties.getConfigFileStagingLocation(),
+                properties.getLogFileAppBaseLocation(),
+                properties.getAppType()
+        );
+    }
+}
+*/

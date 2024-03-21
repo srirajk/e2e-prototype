@@ -1,9 +1,9 @@
 {
   "appDetails": {
     "appName": "Spark Streaming State Notifier",
-    "master": "local[*]",
+    "master": "local[1]",
     "batchDuration": "5",
-    "checkpointLocation": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/checkpointLocation/"
+    "checkpointLocation": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/checkpointLocation/sparkStreamingStateNotifier"
   },
   "kafka": {
     "brokers": "localhost:9092",
@@ -12,7 +12,7 @@
     "groupId": "spark-streaming-state-notifier-1"
   },
   "deltalake": {
-    "storageLocation": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/deltalake_storage/",
-    "tableName": "screening_records"
+    "storageLocation": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/staging-area/deltalake_storage/",
+    "tableName": "file_records"
   }
 }
