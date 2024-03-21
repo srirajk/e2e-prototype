@@ -13,16 +13,18 @@ timestampInString = now.strftime("%d-%m-%Y-%H-%M-%S")
 
 # Change the directory to your desired location
 file_dir = os.getenv('FILE_OUTPUT_DIRECTORY', '/Users/srirajkadimisetty/sample-data/txt/')
+if not file_dir.endswith('/'):
+    # Add the folder splitter
+    file_dir += '/'
+
 file_name_middle_part = f'{os.getenv('FILE_NAME', fake.lexify(text='????'))}'
 
 file_name = f"{business_id}_{product_id}_{file_name_middle_part}_{timestampInString}.txt"
 
 # Define the number of records to generate
-num_records = os.getenv('NUMBER_OF_FAKE_RECORDS', 1000)
+num_records = os.getenv('NUMBER_OF_FAKE_RECORDS', 10000)
 
 output_file = f"{file_dir}{file_name}_{str(num_records)}.txt"
-
-
 
 
 def generate_data():
@@ -30,7 +32,7 @@ def generate_data():
     num_columns = 13
 
     # Define the header for the CSV file
-    #header = 'id,name,phone,address,dob,ssn,occupation,income,risk_score,transaction_amount,country,email,status'
+    # header = 'id,name,phone,address,dob,ssn,occupation,income,risk_score,transaction_amount,country,email,status'
     header_line = f'BusinessName,{business_id},ProductName,{product_id},xxx,yyy'
 
     with open(output_file, mode='w') as file:
@@ -54,7 +56,8 @@ def generate_data():
         # Write number of records at the end of the file
         file.write(f'{num_records}')
 
-    print(f'Fake dataset with fileName {file_name} and {num_records} records generated successfully.')
+    print(f'Fake dataset with fileName {file_name} and {num_records} records generated successfully and is in the '
+          f'directory {output_file}.')
 
 
 if __name__ == '__main__':
