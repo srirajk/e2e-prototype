@@ -1,7 +1,5 @@
 package org.example.externalapiinvoker.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.example.common.model.FileEvent;
 import org.example.common.model.FileRequestLineEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -41,7 +39,7 @@ public class KafkaConfiguration {
 */
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> fileRecordLineKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);

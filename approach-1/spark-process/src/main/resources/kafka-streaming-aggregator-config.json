@@ -1,0 +1,18 @@
+{
+  "appDetails": {
+    "appName": "Spark Streaming Aggregator",
+    "master": "local[*]",
+    "batchDuration": "5",
+    "checkpointLocation": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/spark-process/spark-output-data/checkpointLocation/"
+  },
+  "kafka": {
+    "brokers": "localhost:9092",
+    "inputTopic": "file-record-events-processed",
+    "notificationTopic": "file-record-events-notification",
+    "groupId": "spark-streaming-aggregator-1"
+  },
+  "deltalake": {
+    "storageLocation": "/Users/srirajkadimisetty/projects/demos/e2e-prototype/approach-1/deltalake_storage/",
+    "tableName": "screening_records"
+  }
+}

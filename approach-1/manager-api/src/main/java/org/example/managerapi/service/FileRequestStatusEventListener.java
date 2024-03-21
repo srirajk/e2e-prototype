@@ -3,41 +3,40 @@ package org.example.managerapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.example.common.model.FileEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 @Service
 @Log4j2
-public class FileEventListener {
+public class FileRequestStatusEventListener {
 
 
-    @Value("${kafka.file-events-topic}")
-    private String fileWatcherEventsTopicName;
+    @Value("${kafka.file-request-status-updates-topic}")
+    private String fileRequestStatusUpdatesTopic;
 
     private final FileEventDispatcherService fileEventDispatcherService;
 
-    public ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
-    public FileEventListener(FileEventDispatcherService fileEventDispatcherService, ObjectMapper mapper) {
+    public FileRequestStatusEventListener(FileEventDispatcherService fileEventDispatcherService, ObjectMapper mapper) {
         this.fileEventDispatcherService = fileEventDispatcherService;
         this.mapper = mapper;
     }
 
     @KafkaListener(
-            topics = "#{__listener.fileWatcherEventsTopicName}",
+            topics = "#{__listener.fileRequestStatusUpdatesTopic}",
             containerFactory = "fileEventKafkaListenerContainerFactory")
     public void listen(ConsumerRecord<String, String> fileEventRecord) throws JsonProcessingException {
-        final FileEvent fileEvent = mapper.readValue(fileEventRecord.value(), FileEvent.class);
-        log.info("Received file event: {}", fileEvent);
-        fileEventDispatcherService.dispatchFileEvent(fileEvent);
+        ObjectNode data = mapper.readValue(fileEventRecord.value(), ObjectNode.class);
+        log.info("Received file status event: {}", data);
     }
 
-    public String getFileWatcherEventsTopicName() {
-        return fileWatcherEventsTopicName;
+    public String getFileRequestStatusUpdatesTopic() {
+        return fileRequestStatusUpdatesTopic;
     }
 
 }

@@ -36,6 +36,8 @@ object ReadAndSplitFileRequest {
     val converter = new Converter();
     val fileSplitRequest: SparkFileSplitRequest = converter.getSparkFileSplitRequestConfig(configFileLocation);
 
+    val fieldLength = fileSplitRequest.getBusinessProduct.getFieldLength
+
     val spark = SparkSession.builder()
       .appName(appName)
       .master(master)
@@ -78,9 +80,9 @@ object ReadAndSplitFileRequest {
       .zipWithIndex()
       .filter { case (_, index) => index != 0 && index < totalRecordsExpected + 1 } // Exclude header and footer
       .map { case (record, index) => (record.split("\\|"), index) }
-      // .filter { case (record, _) => record.length == fieldLength } // move to field level
+      .filter { case (record, _) => record.length == fieldLength } // move to field level
       .map { case (recordArray, index) =>
-        Validator.validateFileRequestRecord(fileSplitRequest, index, recordArray)
+        Validator.validateFileRequestRecord(fileSplitRequest, index, recordArray, totalRecordsExpected)
       }
 
     val recordCounter = spark.sparkContext.longAccumulator("Record Counter")

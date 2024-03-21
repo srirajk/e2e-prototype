@@ -15,3 +15,5 @@ hs_err_pid*
 
 # Python virtual environment, recursively
 **/venv/
+/approach-1/deltalake_storage/
+/approach-1/spark-process/spark-output-data/

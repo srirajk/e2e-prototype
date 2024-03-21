@@ -7,6 +7,7 @@ import org.example.common.model.FileRequestLineEvent;
 import org.example.common.model.MatchModel;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -37,7 +38,7 @@ public class ExternalApiProcessor {
 
     private List<MatchModel> executeExternalApi(final FileRequestLineEvent fileRequestLineEvent) {
         Long recordNumber = fileRequestLineEvent.getRecordNumber();
-        List<MatchModel> matches = List.of();
+        List<MatchModel> matches = new ArrayList<>();
         if (recordNumber % 2 == 0) {
             Random rand = new Random();
             for (int i = 0; i < 3; i++) {

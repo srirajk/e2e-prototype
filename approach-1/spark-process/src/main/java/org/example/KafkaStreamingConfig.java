@@ -3,10 +3,21 @@ package org.example;
 import java.io.Serializable;
 
 public class KafkaStreamingConfig implements Serializable {
+
+    private AppDetails appDetails;
     private Kafka kafka;
     private Deltalake deltalake;
 
     // getters and setters
+
+    public AppDetails getAppDetails() {
+        return appDetails;
+    }
+
+    public void setAppDetails(AppDetails appDetails) {
+        this.appDetails = appDetails;
+    }
+
     public Kafka getKafka() {
         return kafka;
     }
@@ -23,12 +34,70 @@ public class KafkaStreamingConfig implements Serializable {
         this.deltalake = deltalake;
     }
 
+    public static class AppDetails implements Serializable {
+        private String appName;
+        private String master;
+        private String batchDuration;
+        private String checkpointLocation;
+
+        // Getters and Setters
+        public String getAppName() {
+            return appName;
+        }
+
+        public void setAppName(String appName) {
+            this.appName = appName;
+        }
+
+        public String getMaster() {
+            return master;
+        }
+
+        public void setMaster(String master) {
+            this.master = master;
+        }
+
+        public String getBatchDuration() {
+            return batchDuration;
+        }
+
+        public void setBatchDuration(String batchDuration) {
+            this.batchDuration = batchDuration;
+        }
+
+        public String getCheckpointLocation() {
+            return checkpointLocation;
+        }
+
+        public void setCheckpointLocation(String checkpointLocation) {
+            this.checkpointLocation = checkpointLocation;
+        }
+    }
+
     public static class Kafka implements Serializable {
         private String brokers;
-        private String topic;
+        private String inputTopic;
+        private String notificationTopic;
         private String groupId;
 
         // getters and setters
+
+        public String getNotificationTopic() {
+            return notificationTopic;
+        }
+
+        public void setNotificationTopic(String notificationTopic) {
+            this.notificationTopic = notificationTopic;
+        }
+
+        public String getInputTopic() {
+            return inputTopic;
+        }
+
+        public void setInputTopic(String inputTopic) {
+            this.inputTopic = inputTopic;
+        }
+
         public String getBrokers() {
             return brokers;
         }
@@ -37,13 +106,6 @@ public class KafkaStreamingConfig implements Serializable {
             this.brokers = brokers;
         }
 
-        public String getTopic() {
-            return topic;
-        }
-
-        public void setTopic(String topic) {
-            this.topic = topic;
-        }
 
         public String getGroupId() {
             return groupId;
@@ -55,15 +117,29 @@ public class KafkaStreamingConfig implements Serializable {
     }
 
     public static class Deltalake implements Serializable {
-        private String location;
+
+        private String storageLocation;
+
+        private String tableName;
 
         // getters and setters
-        public String getLocation() {
-            return location;
+
+        public String getTableName() {
+            return tableName;
         }
 
-        public void setLocation(String location) {
-            this.location = location;
+        public void setTableName(String tableName) {
+            this.tableName = tableName;
         }
+
+        public String getStorageLocation() {
+            return storageLocation;
+        }
+
+        public void setStorageLocation(String storageLocation) {
+            this.storageLocation = storageLocation;
+        }
+
+
     }
 }

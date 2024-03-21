@@ -25,6 +25,9 @@ public class Converter {
         }
     }
 
+    public static String removeExtraSpacesAndSpecialCharacters(final String input) {
+        return input.replaceAll("[^a-zA-Z0-9]", " ").replaceAll("\\s+", " ");
+    }
 
 
     public KafkaStreamingConfig getKafkaStreamingConfigConfig(final String configFileLocation) {

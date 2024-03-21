@@ -18,7 +18,7 @@ file_name_middle_part = f'{os.getenv('FILE_NAME', fake.lexify(text='????'))}'
 file_name = f"{business_id}_{product_id}_{file_name_middle_part}_{timestampInString}.txt"
 
 # Define the number of records to generate
-num_records = os.getenv('NUMBER_OF_FAKE_RECORDS', 10)
+num_records = os.getenv('NUMBER_OF_FAKE_RECORDS', 1000)
 
 output_file = f"{file_dir}{file_name}_{str(num_records)}.txt"
 

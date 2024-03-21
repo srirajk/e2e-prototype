@@ -29,3 +29,4 @@ spring:
 
 kafka:
   file-record-line-events-topic: file-record-events
+  file-record-events-processed-topic: file-record-events-processed

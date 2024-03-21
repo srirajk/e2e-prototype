@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 @Log4j2
 public class KafkaProducerService {
 
-    @Value("${kafka.file-record-line-events-topic}")
+    @Value("${kafka.file-record-events-processed-topic}")
     private String fileRecordLineEventsTopic;
 
     private KafkaTemplate<String, FileRequestLineEvent> kafkaTemplate;

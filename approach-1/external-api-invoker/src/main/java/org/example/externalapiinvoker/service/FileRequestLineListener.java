@@ -21,7 +21,7 @@ import java.util.stream.StreamSupport;
 public class FileRequestLineListener {
 
     @Value("${kafka.file-record-line-events-topic}")
-    public String fileRecordLineEventsTopic;
+    private String fileRecordLineEventsTopic;
 
     private final ExternalApiProcessor externalApiProcessor;
 
@@ -35,7 +35,7 @@ public class FileRequestLineListener {
 
     @KafkaListener(
             topics = "#{__listener.fileRecordLineEventsTopic}",
-            containerFactory = "fileRecordLineKafkaListenerContainerFactory")
+            containerFactory = "kafkaListenerContainerFactory")
     public void commonListenerForMultipleTopics(ConsumerRecord<String, String> record) {
         Map<String, byte[]> currentRecordHeaders = StreamSupport.stream(record.headers().spliterator(), false)
                 .collect(Collectors.toMap(header -> header.key(), header -> header.value()));
@@ -54,5 +54,7 @@ public class FileRequestLineListener {
     }
 
 
-
+    public String getFileRecordLineEventsTopic() {
+        return fileRecordLineEventsTopic;
+    }
 }

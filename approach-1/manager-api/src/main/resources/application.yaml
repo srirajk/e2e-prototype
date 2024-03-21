@@ -24,13 +24,14 @@ spring:
       bootstrap-servers: localhost:9092
       group-id: manager-api
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      #value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
       properties:
         spring:
           json:
             trusted:
               packages: '*'
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 server:
   port: 9999
@@ -39,6 +40,7 @@ kafka:
   file-events-topic: file-watcher-events
   bootstrap-servers: localhost:9092
   file-record-events-topic: file-record-events
+  file-request-status-updates-topic: file-request-status-updates
 
 
 

@@ -16,7 +16,7 @@ import java.util.Map;
 @Builder
 public class FileRequestLineEvent implements Cloneable, Serializable {
 
-    private Map<String, Object> fileRequest;
+    private Map<String, String> fileRequest;
     private String requestId;
     private String businessId;
     private String productId;
@@ -28,6 +28,8 @@ public class FileRequestLineEvent implements Cloneable, Serializable {
     private String errorMessage;
     private List<MatchModel> hits;
     private boolean postFilterApplied;
+    private Long totalRecords;
+    private String rawText;
 
     @Override
     public FileRequestLineEvent clone() {
