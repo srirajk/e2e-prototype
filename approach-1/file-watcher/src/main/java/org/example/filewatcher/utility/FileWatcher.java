@@ -13,6 +13,7 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -84,7 +85,7 @@ public class FileWatcher {
      * @throws IOException          if an I/O error occurs
      * @throws InterruptedException if the thread is interrupted
      */
-    public void watch() throws IOException, InterruptedException {
+/*    public void watch() throws IOException, InterruptedException {
         processExistingFiles();
         WatchService watcher = FileSystems.getDefault().newWatchService();
         dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
@@ -153,8 +154,8 @@ public class FileWatcher {
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                     // Process create event
                     createFileEvent(file);
-                    /*Path readPath = Paths.get(child.toString() + ".read");
-                    Files.move(child, readPath, StandardCopyOption.REPLACE_EXISTING);*/
+                    *//*Path readPath = Paths.get(child.toString() + ".read");
+                    Files.move(child, readPath, StandardCopyOption.REPLACE_EXISTING);*//*
                 } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                     // TODO
                 } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
@@ -166,7 +167,96 @@ public class FileWatcher {
                 break;
             }
         }
+    }*/
+    public void watch() throws IOException, InterruptedException {
+        processExistingFiles();
+        WatchService watcher = FileSystems.getDefault().newWatchService();
+        dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+
+        log.info("Watch Service registered for dir: " + dir.getFileName());
+
+        while (true) {
+            WatchKey key;
+            try {
+                key = watcher.poll(pollIntervalMillis, TimeUnit.MILLISECONDS);
+                if (key == null) {
+                    continue;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            for (WatchEvent<?> event : key.pollEvents()) {
+                WatchEvent.Kind<?> kind = event.kind();
+
+                @SuppressWarnings("unchecked")
+                WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                Path fileName = ev.context();
+
+                if (kind == StandardWatchEventKinds.OVERFLOW) {
+                    continue;
+                }
+
+                Path child = dir.resolve(fileName);
+                if (Files.notExists(child) || !child.toString().endsWith(fileExtension)) {
+                    lastModifiedTimes.remove(child);
+                    continue;
+                }
+
+                FileTime fileTime = Files.getLastModifiedTime(child);
+                Instant lastModifiedTime = fileTime.toInstant();
+
+                if (lastModifiedTimes.containsKey(child)) {
+                    Instant lastRecordedTime = lastModifiedTimes.get(child);
+                    if (lastModifiedTime.isBefore(lastRecordedTime.plusMillis(quietPeriodMillis))) {
+                        continue;
+                    }
+                }
+
+                if (!isFileStable(child, lastModifiedTime)) {
+                    continue;
+                }
+
+                lastModifiedTimes.put(child, lastModifiedTime);
+
+                log.info(kind.name() + ": " + fileName);
+                File file = child.toFile();
+
+                if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                    createFileEvent(file);
+                } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                    // TODO
+                } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    // TODO
+                }
+                // The ENTRY_DELETE case does not need to be handled here since the file is already gone
+            }
+
+            boolean valid = key.reset();
+            if (!valid) {
+                break;
+            }
+        }
     }
+
+    private boolean isFileStable(Path file, Instant lastModifiedTime) throws IOException, InterruptedException {
+        final int NUM_CHECKS = 2;
+        final long SLEEP_MILLIS = quietPeriodMillis / NUM_CHECKS;
+        long lastSize = -1;
+        for (int i = 0; i < NUM_CHECKS; i++) {
+            long size = Files.size(file);
+            if (size == lastSize) {
+                TimeUnit.MILLISECONDS.sleep(SLEEP_MILLIS);
+            } else {
+                lastSize = size;
+                i = 0; // reset the loop if the file size changed
+            }
+        }
+        // If we got here, the file size did not change for the duration of the checks
+        return true;
+    }
+
 
     /**
      * Processes all existing files in the directory at the start.
@@ -214,7 +304,6 @@ public class FileWatcher {
         Instant timestamp = attrs.lastModifiedTime().toInstant();
         return timestamp.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT);
     }
-
 
 
     public static void main(String[] args) {

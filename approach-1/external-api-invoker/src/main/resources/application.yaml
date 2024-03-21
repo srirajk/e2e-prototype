@@ -15,6 +15,7 @@ spring:
             trusted:
               packages: '*'
     consumer:
+      max-poll-interval-ms: 500
       enable-auto-commit: true
       bootstrap-servers: localhost:9092
       group-id: external-api-invoker
@@ -26,6 +27,7 @@ spring:
           json:
             trusted:
               packages: '*'
+      max-poll-records: 5000
 
 kafka:
   file-record-line-events-topic: file-record-events

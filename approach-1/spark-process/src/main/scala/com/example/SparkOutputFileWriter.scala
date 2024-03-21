@@ -71,6 +71,7 @@ object SparkOutputFileWriter {
     df.repartition(numberOfPartitions)
       .write
       .option("header", "true")
+      .mode("overwrite")
       .csv(s"$outputLocation")
 
 

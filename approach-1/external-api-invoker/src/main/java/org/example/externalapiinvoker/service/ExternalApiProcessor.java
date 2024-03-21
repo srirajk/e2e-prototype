@@ -37,6 +37,11 @@ public class ExternalApiProcessor {
     }
 
     private List<MatchModel> executeExternalApi(final FileRequestLineEvent fileRequestLineEvent) {
+        try {
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         Long recordNumber = fileRequestLineEvent.getRecordNumber();
         List<MatchModel> matches = new ArrayList<>();
         if (recordNumber % 2 == 0) {
