@@ -1,5 +1,5 @@
 ```markdown
-### Financial Case Manager Application Requirements
+### Application Requirements
 
 1. **Alert Types and Business Units:**
    - Various types of alerts (e.g., transaction type, customer type, AML type).
